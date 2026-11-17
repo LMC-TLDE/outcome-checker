@@ -659,7 +659,7 @@
       "</ul><p>The full checklist is on the " + link("selfcheck") + " page.</p>";
 
     var contact = TLDE_EMAIL
-      ? "Want a second set of eyes on these? Email TLDE at <a href='mailto:" + TLDE_EMAIL + "'>" + TLDE_EMAIL + "</a>. Bring the draft and the assessments you plan to use."
+      ? "Want a second set of eyes on these? Email <a href='mailto:" + TLDE_EMAIL + "'>" + TLDE_EMAIL + "</a>. Bring the draft and the assessments you plan to use."
       : "Want a second set of eyes on these? Reach out to TLDE, and bring the draft and the assessments you plan to use.";
     html += "<p>" + contact + "</p></div>";
 
@@ -746,7 +746,7 @@
 
   var cl = document.getElementById("contact-line");
   cl.innerHTML = TLDE_EMAIL
-    ? "Questions about outcomes? Email TLDE at <a href='mailto:" + TLDE_EMAIL + "'>" + TLDE_EMAIL + "</a>."
+    ? "Questions about outcomes? Email <a href='mailto:" + TLDE_EMAIL + "'>" + TLDE_EMAIL + "</a>."
     : "Questions about outcomes? Reach out to TLDE.";
 
   // Expose for testing
