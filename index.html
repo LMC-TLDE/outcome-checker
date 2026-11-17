@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outcome Language Checker | TLDE, Lake Michigan College</title>
+<style>
+  :root {
+    --text: #1a1a1a;
+    --muted: #4a4a4a;
+    --border: #c8c8c8;
+    --callout: #f2f2f2;
+    --flag: #fff4d6;
+    --flag-border: #b8860b;
+    --ok: #e8f3ea;
+    --ok-border: #3d7a4a;
+    --focus: #005a9e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Calibri, Carlito, "Segoe UI", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text);
+    background: #fff;
+    margin: 0;
+    padding: 16px;
+  }
+  main { max-width: 820px; margin: 0 auto; }
+  h1, h2, h3 { color: #000; font-weight: 700; margin: 0 0 8px; line-height: 1.25; }
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.25rem; margin-top: 24px; }
+  h3 { font-size: 1.05rem; }
+  p { margin: 0 0 12px; }
+  a { color: #005a9e; }
+  a:focus, button:focus, textarea:focus, select:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .callout {
+    background: var(--callout);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 12px 0;
+  }
+  label { font-weight: 700; display: block; margin-bottom: 4px; }
+  .hint { color: var(--muted); font-size: 0.95rem; margin: 0 0 6px; }
+  textarea {
+    width: 100%;
+    min-height: 170px;
+    font: inherit;
+    padding: 10px;
+    border: 1px solid #767676;
+    border-radius: 4px;
+    resize: vertical;
+  }
+  select {
+    font: inherit;
+    padding: 6px 8px;
+    border: 1px solid #767676;
+    border-radius: 4px;
+    background: #fff;
+    max-width: 100%;
+  }
+  .field { margin-bottom: 16px; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 8px; }
+  button {
+    font: inherit;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 4px;
+    border: 1px solid #000;
+    cursor: pointer;
+  }
+  .primary { background: #000; color: #fff; }
+  .secondary { background: #fff; color: #000; }
+  .result {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin: 14px 0;
+  }
+  .result-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; }
+  .outcome-text { margin: 6px 0 10px; }
+  mark { background: var(--flag); border-bottom: 2px solid var(--flag-border); padding: 0 2px; color: inherit; }
+  .tag {
+    display: inline-block;
+    font-size: 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1px 10px;
+    background: var(--callout);
+    white-space: nowrap;
+  }
+  .flag {
+    border-left: 4px solid var(--flag-border);
+    background: #fffbef;
+    padding: 8px 12px;
+    margin: 8px 0;
+  }
+  .flag p { margin: 0 0 6px; }
+  .flag p:last-child { margin-bottom: 0; }
+  .clear {
+    border-left: 4px solid var(--ok-border);
+    background: var(--ok);
+    padding: 8px 12px;
+    margin: 8px 0;
+  }
+  .source { font-size: 0.9rem; color: var(--muted); }
+  .summary { font-weight: 700; }
+  ul { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+  footer { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 12px; font-size: 0.95rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Outcome Language Checker</h1>
+  <p>Paste one outcome, or a full set with one outcome per line. The checker reads the wording and points out the patterns that most often send an outcome back for revision. Nothing you paste leaves this page.</p>
+
+  <div class="callout">
+    <p><strong>What this is, and what it is not.</strong> This is a first pass on wording only. It cannot tell whether an outcome fits your discipline, your course, or the assessments you have planned. Those are the questions that matter most, and they are the ones worth a conversation with TLDE.</p>
+  </div>
+
+  <form id="checker" novalidate>
+    <div class="field">
+      <label for="level">What kind of outcome is this?</label>
+      <select id="level">
+        <option value="course100">Course outcome, 100-level course</option>
+        <option value="course200" selected>Course outcome, 200-level course</option>
+        <option value="program">Program or discipline outcome</option>
+        <option value="module">Module or assignment outcome</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="input">Outcome language</label>
+      <p class="hint" id="input-hint">One outcome per line. Numbering and a lead-in line such as "Upon completion, students will be able to:" are fine to include.</p>
+      <textarea id="input" aria-describedby="input-hint" spellcheck="true"></textarea>
+    </div>
+    <div class="actions">
+      <button type="submit" class="primary">Check outcomes</button>
+      <button type="button" class="secondary" id="clear">Clear</button>
+      <button type="button" class="secondary" id="example">Try an example</button>
+    </div>
+  </form>
+
+  <div id="results" aria-live="polite"></div>
+
+  <footer>
+    <p>The guidance behind each note comes from the TLDE Outcomes pages, which draw on Anderson and Krathwohl's revised Bloom taxonomy (2001), the HLC Criteria for Accreditation (Criteria 3.A and 3.E), the SUNY OSCQR rubric, and the OLC QCTIP framework. No accreditor publishes a list of forbidden verbs; the notes here are recommendations, not rules.</p>
+    <p id="contact-line"></p>
+  </footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Settings ----------
+  var TLDE_EMAIL = "kdailey@lakemichigancollege.edu"; // Contact address shown on results and in the footer
+
+  var PAGES = {
+    verbs: { name: "Verbs in Outcome Language", url: "https://lakemichigancollege.sharepoint.com/TLDE/SitePages/Verbs-in-Outcome-Languae.aspx" },
+    pitfalls: { name: "Common Pitfalls", url: "https://lakemichigancollege.sharepoint.com/TLDE/SitePages/Common-Pitfalls.aspx" },
+    selfcheck: { name: "Outcome Self-Check", url: "https://lakemichigancollege.sharepoint.com/TLDE/SitePages/Outcome-Self-Check.aspx" },
+    clos: { name: "Writing Course Learning Outcomes", url: "https://lakemichigancollege.sharepoint.com/TLDE/SitePages/Writing-Course-Learning-Outcomes.aspx" },
+    sources: { name: "Sources and Further Reading", url: "https://lakemichigancollege.sharepoint.com/TLDE/SitePages/Sources-and-Further-Reading.aspx" }
+  };
+
+  // ---------- Verb bank (from Verbs in Outcome Language) ----------
+  var LEVELS = {
+    Remember: ["define", "identify", "label", "list", "match", "name", "recall", "recognize", "state"],
+    Understand: ["classify", "compare", "describe", "explain", "illustrate", "interpret", "paraphrase", "summarize", "translate", "exemplify", "infer", "predict", "outline", "articulate"],
+    Apply: ["apply", "calculate", "demonstrate", "execute", "implement", "operate", "perform", "solve", "use", "compute", "measure", "record", "prepare", "present", "administer", "employ", "select", "utilize", "conduct", "format", "document", "communicate", "locate", "maintain"],
+    Analyze: ["analyze", "deconstruct", "diagnose", "differentiate", "examine", "organize", "sequence", "troubleshoot", "distinguish", "contrast", "investigate", "categorize", "attribute"],
+    Evaluate: ["appraise", "critique", "defend", "evaluate", "judge", "justify", "prioritize", "recommend", "validate", "assess", "argue"],
+    Create: ["compose", "construct", "design", "develop", "formulate", "generate", "plan", "produce", "synthesize", "create", "write", "integrate", "propose"],
+    Psychomotor: ["assemble", "adjust", "calibrate", "imitate", "manipulate", "position"],
+    Affective: ["accept", "advocate", "challenge", "question", "resolve"]
+  };
+  var PHRASE_VERBS = [
+    { re: /^adhere to\b/, level: "Affective", verb: "adhere to" },
+    { re: /^comply with\b/, level: "Affective", verb: "comply with" },
+    { re: /^advocate for\b/, level: "Affective", verb: "advocate for" },
+    { re: /^set up\b/, level: "Psychomotor", verb: "set up" },
+    { re: /^carry out\b/, level: "Apply", verb: "carry out" }
+  ];
+  var VERB_LEVEL = {};
+  Object.keys(LEVELS).forEach(function (lvl) {
+    LEVELS[lvl].forEach(function (v) { if (!VERB_LEVEL[v]) VERB_LEVEL[v] = lvl; });
+  });
+  // Words that are often nouns; only count them as a second verb when an object follows.
+  var NOUNISH = ["plan", "design", "use", "list", "review", "match", "label", "state", "name", "question", "challenge", "record", "measure", "present", "position", "sequence", "outline", "produce", "attribute", "judge", "value", "study", "accept", "resolve", "select", "write"];
+  var OBJECT_STARTERS = ["a", "an", "the", "their", "its", "his", "her", "how", "why", "what", "when", "which", "whether", "and", "appropriate", "relevant", "basic", "common", "multiple", "various", "specific", "key", "major", "data", "information", "evidence", "results", "findings", "solutions", "strategies", "methods", "techniques", "procedures"];
+
+  var ADVERB_RE = /ly$/;
+
+  // ---------- Text helpers ----------
+  function lemma(word) {
+    var w = word.toLowerCase().replace(/[^a-z\-]/g, "");
+    if (!w) return w;
+    if (VERB_LEVEL[w]) return w;
+    var tries = [];
+    if (/ies$/.test(w)) tries.push(w.replace(/ies$/, "y"));
+    if (/es$/.test(w)) tries.push(w.replace(/es$/, ""));
+    if (/s$/.test(w)) tries.push(w.replace(/s$/, ""));
+    if (/ing$/.test(w)) { tries.push(w.replace(/ing$/, "")); tries.push(w.replace(/ing$/, "e")); tries.push(w.replace(/([a-z])\1ing$/, "$1")); }
+    if (/ed$/.test(w)) { tries.push(w.replace(/ed$/, "")); tries.push(w.replace(/d$/, "")); tries.push(w.replace(/ied$/, "y")); }
+    for (var i = 0; i < tries.length; i++) { if (VERB_LEVEL[tries[i]]) return tries[i]; }
+    return w;
+  }
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function cleanLine(line) {
+    return line
+      .replace(/^\s*(?:[\-•\*●◦]|\(?[0-9]{1,2}[\.\)]|\(?[a-zA-Z][\.\)]|(?:CLO|SLO|PLO|LO|Outcome)\s*[0-9]+[\.:\)]?)\s*/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  function isLeadIn(line) {
+    var l = line.toLowerCase();
+    return /[:]\s*$/.test(l) && /(will be able to|students will|learners will|upon|by the end|at the end|completion)/.test(l) && l.split(" ").length < 25;
+  }
+
+  // Find where the action part of the outcome begins.
+  function actionStart(text) {
+    var lower = text.toLowerCase();
+    var patterns = [
+      /\b(?:will|should|can|must)\s+be\s+able\s+to\s+/g,
+      /\bable\s+to\s+/g,
+      /\b(?:will|should|can|must)\s+(?:be\s+expected\s+to\s+)?/g
+    ];
+    for (var p = 0; p < patterns.length; p++) {
+      var m, last = -1;
+      patterns[p].lastIndex = 0;
+      while ((m = patterns[p].exec(lower)) !== null) {
+        if (m.index < 200) { last = m.index + m[0].length; break; }
+      }
+      if (last > -1) return last;
+    }
+    return 0;
+  }
+
+  function tokenize(text) {
+    var tokens = [];
+    var re = /[A-Za-z][A-Za-z'\-]*/g, m;
+    while ((m = re.exec(text)) !== null) tokens.push({ word: m[0], lower: m[0].toLowerCase(), start: m.index, end: m.index + m[0].length });
+    return tokens;
+  }
+
+  function mainVerb(text) {
+    var start = actionStart(text);
+    var rest = text.slice(start);
+    var tokens = tokenize(rest);
+    var i = 0;
+    while (i < tokens.length && (ADVERB_RE.test(tokens[i].lower) && !VERB_LEVEL[lemma(tokens[i].word)])) i++;
+    if (i >= tokens.length) return null;
+    var tail = rest.slice(tokens[i].start).toLowerCase();
+    for (var p = 0; p < PHRASE_VERBS.length; p++) {
+      if (PHRASE_VERBS[p].re.test(tail)) return { verb: PHRASE_VERBS[p].verb, level: PHRASE_VERBS[p].level, index: start + tokens[i].start };
+    }
+    var lem = lemma(tokens[i].word);
+    return { verb: lem, raw: tokens[i].word, level: VERB_LEVEL[lem] || null, index: start + tokens[i].start };
+  }
+
+  // Additional verbs joined by "and", "or", or commas after the main verb.
+  function extraVerbs(text, main) {
+    if (!main) return [];
+    var start = actionStart(text);
+    var tokens = tokenize(text.slice(start));
+    var found = [];
+    for (var i = 1; i < tokens.length; i++) {
+      var prev = tokens[i - 1].lower;
+      // Stop at a purpose clause ("to plan and evaluate care"): verbs after it serve the main action.
+      if (prev === "to" && VERB_LEVEL[lemma(tokens[i].word)]) break;
+      var between = text.slice(start + tokens[i - 1].end, start + tokens[i].start);
+      var joined = prev === "and" || prev === "or" || /,\s*$/.test(between);
+      if (!joined) continue;
+      var lem = lemma(tokens[i].word);
+      if (!VERB_LEVEL[lem]) continue;
+      if (lem === main.verb) continue;
+      // Skip "-ing" and "-ed" forms here (usually modifiers, e.g. "and evolving").
+      if (/(ing|ed)$/.test(tokens[i].lower) && tokens[i].lower !== lem) continue;
+      if (NOUNISH.indexOf(lem) > -1) {
+        var next = tokens[i + 1] ? tokens[i + 1].lower : "";
+        if (OBJECT_STARTERS.indexOf(next) === -1) continue;
+      }
+      // Ignore a verb that is the object of "how to", "ability to", etc.
+      var before2 = tokens[i - 2] ? tokens[i - 2].lower : "";
+      if (before2 === "to") continue;
+      if (found.indexOf(lem) === -1) found.push(lem);
+    }
+    return found;
+  }
+
+  // ---------- Rules ----------
+  function link(key) {
+    var pg = PAGES[key];
+    return '<a href="' + pg.url + '" target="_blank" rel="noopener">' + pg.name + "</a>";
+  }
+
+  var VAGUE_VERBS = [
+    {
+      re: /\bdemonstrat(?:e|es|ing)\s+(?:an?\s+|the\s+|a\s+basic\s+|basic\s+|a\s+thorough\s+|thorough\s+)?(?:understanding|knowledge|awareness|appreciation|comprehension|familiarity|mastery|grasp)\b/i,
+      title: "The demonstration is not named yet",
+      msg: "The word <em>demonstrate</em> makes this read as measurable, but it does not yet say what the demonstration is. If you already know how you would assess it, that assessment probably holds the verb.",
+      alt: "explain, apply, solve, produce",
+      src: "verbs"
+    },
+    {
+      re: /\b(?:understand|understands|understanding|comprehend|comprehends|grasp|grasps)\b/i,
+      title: "A broad verb",
+      msg: "This verb names a broad category of thinking rather than a specific action. Two instructors might look for different evidence of it, and both would be right. If you already know how you would assess it, the verb in that assessment might fit here.",
+      alt: "explain, describe, interpret, summarize, predict, compare",
+      src: "verbs"
+    },
+    {
+      re: /\b(?:know|knows|learn about|learns about|learn|learns)\b/i,
+      title: "A broad verb",
+      msg: "This verb does not say how deep the knowledge goes. Knowing a definition and knowing how to apply it are different outcomes, and the wording might name which one you mean.",
+      alt: "define, identify, list, explain, apply",
+      src: "verbs"
+    },
+    {
+      re: /\b(?:appreciate|appreciates|value|values|be aware of|become aware of|develop an awareness of|gain an awareness of)\b/i,
+      title: "A disposition without a behavior",
+      msg: "This names an attitude without naming the behavior that would show it. If this is a disposition you want to assess, perhaps name both the observable behavior and the tool you would use to document it.",
+      alt: "describe the significance of, defend, justify, advocate for",
+      src: "verbs"
+    },
+    {
+      re: /\b(?:be familiar with|become familiar with|gain familiarity with|be exposed to|be introduced to|gain exposure to|gain an understanding of|gain knowledge of|develop an understanding of)\b/i,
+      title: "Describes the course, not the student",
+      msg: "This describes what the course does for the student rather than what the student can do afterward.",
+      alt: "identify, describe, recognize",
+      src: "verbs"
+    }
+  ];
+
+  function checkOutcome(text, level, mv) {
+    var flags = [];
+    var marks = [];
+    var lower = text.toLowerCase();
+
+    function addMark(re) {
+      var g = new RegExp(re.source, "gi"), m;
+      while ((m = g.exec(text)) !== null) { marks.push([m.index, m.index + m[0].length]); if (m[0].length === 0) g.lastIndex++; }
+    }
+
+    // 1. Subject is the course or instructor
+    var courseSubject = /^(?:this|the)\s+(?:course|class|program|unit|module)\s+(?:will|is designed to|aims to|introduces|covers|provides|explores|examines|focuses)|^(?:the\s+)?instructor\s+will|^(?:this|the)\s+(?:course|class)\b/i;
+    if (courseSubject.test(text) || /\b(?:will cover|will be covered|will introduce|introduces students to|provides students with|exposes students to)\b/i.test(text)) {
+      addMark(/^(?:this|the)\s+(?:course|class|program|unit|module)|\bwill cover\b|\bintroduces students to\b|\bprovides students with\b|\bexposes students to\b|^(?:the\s+)?instructor\s+will/);
+      flags.push({
+        title: "The subject is the course",
+        msg: "This sentence describes what the course covers or what will be taught. Perhaps consider making the student the subject: after this course, what can a student do that they could not do before?",
+        src: "pitfalls"
+      });
+    }
+
+    // 2. Vague verbs (first match only, most specific first)
+    for (var v = 0; v < VAGUE_VERBS.length; v++) {
+      if (VAGUE_VERBS[v].re.test(text)) {
+        addMark(VAGUE_VERBS[v].re);
+        flags.push({
+          title: VAGUE_VERBS[v].title,
+          msg: VAGUE_VERBS[v].msg,
+          alt: VAGUE_VERBS[v].alt,
+          src: VAGUE_VERBS[v].src
+        });
+        break;
+      }
+    }
+
+    // 3. Activity verbs (study, cover, review, discuss) as the main action
+    var activityMain = mv && ["study", "cover", "review", "discuss", "read", "watch", "listen", "explore", "attend", "participate", "complete", "submit", "take"].indexOf(mv.verb) > -1;
+    var activityPhrase = /\b(?:complete|completes|participate in|participates in|attend|attends|submit|submits|take part in|engage in|engages in)\b/i;
+    if (activityMain || activityPhrase.test(text)) {
+      if (activityMain) marks.push([mv.index, mv.index + (mv.raw || mv.verb).length]);
+      addMark(activityPhrase);
+      flags.push({
+        title: "An activity rather than a result",
+        msg: "This reads like something students do during the course (an assignment, a discussion, a reading). That activity is likely how the outcome is taught or assessed. Perhaps consider naming the ability the activity builds.",
+        src: "pitfalls"
+      });
+    }
+
+    // 4. Compound outcome
+    var extras = extraVerbs(text, mv);
+    if (mv && mv.level && extras.length) {
+      var all = [mv.verb].concat(extras);
+      extras.forEach(function (e) { addMark(new RegExp("\\b" + e + "(?:s|es|d|ed)?\\b")); });
+      flags.push({
+        title: "More than one action",
+        msg: "This joins " + all.length + " actions (" + all.join(", ") + "). If a student could do one well and another poorly, separate outcomes would let you record that. One outcome may be fine in two cases: the actions are one performance that is always assessed together, such as <em>measure and record</em>, or the second action finishes the first, such as <em>compare two theories and explain how each accounts for a scenario</em>. This note is a prompt to check, not a sign that something is wrong.",
+        src: "verbs"
+      });
+    }
+
+    // 5. Vague content
+    if (/\b(?:demonstrate|demonstrates|show|shows|exhibit|exhibits|display|displays|develop|develops|use|uses|apply|applies)\s+(?:effective|good|strong|appropriate|proper|sound|adequate|basic|professional|critical|interpersonal|communication|thinking|problem[\- ]solving|leadership|teamwork|technical|\s)*(?:skills|competence|competency|competencies|proficiency|abilities|ability)\b/i.test(text)) {
+      addMark(/\b(?:effective|good|strong|appropriate|proper|sound|adequate)?\s*(?:communication|critical thinking|problem[\- ]solving|interpersonal|leadership|teamwork|technical|professional)?\s*(?:skills|competence|competency|competencies|proficiency|abilities)\b/);
+      flags.push({
+        title: "The content could be more specific",
+        msg: "A phrase like this can mean different things to different people. Would two colleagues in your discipline agree on what counts as meeting it? Perhaps consider naming the specific performance, such as the kind of presentation, document, or procedure, and who it is for.",
+        src: "pitfalls"
+      });
+    }
+
+    // 6. Grain size (citation formatting at course or program level)
+    if (level !== "module" && /\b(?:APA|MLA|Chicago(?:\s+style)?|Turabian|AMA)\b|\btitle page\b|\breference list\b|\bworks cited\b/.test(text)) {
+      addMark(/\b(?:APA|MLA|Chicago(?:\s+style)?|Turabian|AMA)\b|\btitle page\b|\breference list\b|\bworks cited\b/);
+      flags.push({
+        title: "This might fit better at the assignment level",
+        msg: "Naming a specific citation format or document part is a good outcome, but it may be smaller than a course or program outcome. One option is to keep it at the assignment level and write the course outcome around the larger ability, such as documenting sources accurately in a style suited to the discipline.",
+        src: "pitfalls"
+      });
+    }
+
+    // 7. Level check for introductory courses
+    if (level === "course100" && mv && (mv.level === "Create" || /\b(?:synthesiz|original|novel)\w*/i.test(text)) && !/\b(?:write|writes|prepare|prepares|present|presents|plan|plans|produce|produces)\b/i.test(mv.raw || mv.verb)) {
+      flags.push({
+        title: "Worth a look at the level",
+        msg: "The cognitive demand here is high for an introductory course. That may be exactly right. It is worth a second look at whether students can reach it, and be assessed on it, in the time a 100-level course has.",
+        src: "pitfalls"
+      });
+    }
+
+    // 8. Program outcome described as a course
+    if (level === "program" && /\b(?:in this course|this course|the course)\b/i.test(text)) {
+      flags.push({
+        title: "Program outcomes describe the graduate",
+        msg: "This mentions a course. Program outcomes usually describe what a graduate can do across the whole program. If this could be met in a single course, it might belong at the course level.",
+        src: "selfcheck"
+      });
+    }
+
+    // 9. Affective outcome without an observable behavior or instrument
+    if (mv && mv.level === "Affective" && !/\b(?:as (?:documented|evidenced|measured|observed|shown)|evaluation|rubric|form|checklist|observation|portfolio)\b/i.test(text)) {
+      flags.push({
+        title: "Name how you would see it",
+        msg: "Professional behavior and dispositions are the hardest outcomes to assess honestly. Perhaps consider naming both the observable behavior and the tool that documents it, for example a clinical evaluation form or an observation checklist.",
+        src: "verbs"
+      });
+    }
+
+    // 10. Unrecognized main verb (only if nothing else explains it)
+    if (mv && !mv.level && !flags.length) {
+      marks.push([mv.index, mv.index + (mv.raw || mv.verb).length]);
+      flags.push({
+        title: "Check the main verb",
+        msg: "The checker did not recognize <em>" + escapeHtml(mv.raw || mv.verb) + "</em> as an action verb. That is not necessarily a problem, since its word list is limited. Ask whether the verb names something a student does that you could watch, read, or listen to.",
+        src: "verbs",
+        note: true
+      });
+    }
+    if (!mv) {
+      flags.push({
+        title: "No action found",
+        msg: "The checker could not find what the student does in this sentence. Perhaps check that it names an action a student performs.",
+        src: "selfcheck"
+      });
+    }
+
+    // 11. Length and readability
+    var words = text.split(/\s+/).length;
+    if (words > 45) {
+      flags.push({
+        title: "Long for a student to read",
+        msg: "This outcome is " + words + " words. Would a student understand what it asks of them on a first read? If it is carrying several ideas, it may be more than one outcome.",
+        src: "selfcheck"
+      });
+    }
+
+    return { flags: flags, marks: marks };
+  }
+
+  function highlight(text, marks) {
+    if (!marks.length) return escapeHtml(text);
+    marks.sort(function (a, b) { return a[0] - b[0]; });
+    var merged = [];
+    marks.forEach(function (m) {
+      if (m[1] <= m[0]) return;
+      var last = merged[merged.length - 1];
+      if (last && m[0] <= last[1]) last[1] = Math.max(last[1], m[1]);
+      else merged.push([m[0], m[1]]);
+    });
+    var out = "", pos = 0;
+    merged.forEach(function (m) {
+      out += escapeHtml(text.slice(pos, m[0])) + "<mark>" + escapeHtml(text.slice(m[0], m[1])) + "</mark>";
+      pos = m[1];
+    });
+    return out + escapeHtml(text.slice(pos));
+  }
+
+  // ---------- Set-level checks ----------
+  var STOP = "the a an and or of to in for with on by as at from that this their students student will be able can should using use".split(" ");
+  function contentWords(t) {
+    return t.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter(function (w) { return w.length > 2 && STOP.indexOf(w) === -1; });
+  }
+  function overlap(a, b) {
+    var A = contentWords(a), B = contentWords(b);
+    if (!A.length || !B.length) return 0;
+    var setB = {}; B.forEach(function (w) { setB[w] = true; });
+    var shared = 0, seen = {};
+    A.forEach(function (w) { if (setB[w] && !seen[w]) { shared++; seen[w] = true; } });
+    var uniq = {}; A.concat(B).forEach(function (w) { uniq[w] = true; });
+    return shared / Object.keys(uniq).length;
+  }
+
+  // ---------- Render ----------
+  function render(lines, level) {
+    var box = document.getElementById("results");
+    var html = "";
+    var results = lines.map(function (text) {
+      var mv = mainVerb(text);
+      var r = checkOutcome(text, level, mv);
+      return { text: text, mv: mv, flags: r.flags, marks: r.marks };
+    });
+    var flaggedCount = results.filter(function (r) { return r.flags.some(function (f) { return !f.note; }); }).length;
+
+    html += "<h2 id='results-heading' tabindex='-1'>Results</h2>";
+    html += "<p class='summary'>" + results.length + (results.length === 1 ? " outcome checked. " : " outcomes checked. ") +
+      (flaggedCount === 0 ? "Nothing in the wording was flagged." : flaggedCount + (flaggedCount === 1 ? " has" : " have") + " something worth a second look.") + "</p>";
+
+    // Set notes
+    var setNotes = [];
+    if (results.length > 6 && (level === "course100" || level === "course200")) {
+      setNotes.push("This set has " + results.length + " outcomes. The Self-Check suggests three to six for a course, unless external standards call for more. If some were written unit by unit, perhaps consider whether any group together under one larger ability. The rest may work well as module outcomes. See " + link("pitfalls") + ".");
+    }
+    for (var i = 0; i < results.length; i++) {
+      for (var j = i + 1; j < results.length; j++) {
+        if (overlap(results[i].text, results[j].text) >= 0.5) {
+          setNotes.push("Outcomes " + (i + 1) + " and " + (j + 1) + " share much of their wording. They might be the same outcome said twice, or they might be distinct in a way the wording does not show yet. See " + link("selfcheck") + ".");
+        }
+      }
+    }
+    if (setNotes.length) {
+      html += "<div class='callout'><h3>About the set</h3><ul>" + setNotes.map(function (n) { return "<li>" + n + "</li>"; }).join("") + "</ul></div>";
+    }
+
+    results.forEach(function (r, idx) {
+      html += "<section class='result' aria-labelledby='o" + idx + "'>";
+      html += "<div class='result-head'><h3 id='o" + idx + "'>Outcome " + (idx + 1) + "</h3>";
+      if (r.mv && r.mv.level) {
+        html += "<span class='tag'>Main verb: " + escapeHtml(r.mv.verb) + " (" + r.mv.level + ")</span>";
+      }
+      html += "</div>";
+      html += "<p class='outcome-text'>" + highlight(r.text, r.marks) + "</p>";
+      if (!r.flags.length) {
+        html += "<div class='clear'><p><strong>Nothing flagged in the wording.</strong> The questions below are still worth asking.</p></div>";
+      }
+      r.flags.forEach(function (f) {
+        html += "<div class='flag'><p><strong>" + f.title + ".</strong> " + f.msg + "</p>";
+        if (f.alt) html += "<p>Verbs that might fit: " + f.alt + ".</p>";
+        html += "<p class='source'>More on this: " + link(f.src) + "</p></div>";
+      });
+      html += "</section>";
+    });
+
+    html += "<div class='callout'><h3>What only you can check</h3><ul>" +
+      "<li>Can you name the assignment, exam, performance, or product that would show each outcome was met?</li>" +
+      "<li>Does each outcome connect to a program or institutional outcome?</li>" +
+      "<li>If a student met all of these, would you be satisfied they had completed the course?</li>" +
+      "<li>Would a colleague in your discipline read each one the same way you do?</li>" +
+      "</ul><p>The full checklist is on the " + link("selfcheck") + " page.</p></div>";
+
+    var contact = TLDE_EMAIL
+      ? "Want a second set of eyes on these? Email TLDE at <a href='mailto:" + TLDE_EMAIL + "'>" + TLDE_EMAIL + "</a>. Bring the draft and the assessments you plan to use."
+      : "Want a second set of eyes on these? Reach out to TLDE, and bring the draft and the assessments you plan to use.";
+    html += "<p>" + contact + "</p>";
+
+    box.innerHTML = html;
+    var h = document.getElementById("results-heading");
+    if (h) h.focus();
+  }
+
+  // ---------- Wire up ----------
+  var form = document.getElementById("checker");
+  var input = document.getElementById("input");
+  var levelSel = document.getElementById("level");
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var lines = input.value.split(/\r?\n/).map(cleanLine).filter(function (l) { return l && !isLeadIn(l) && /[a-z]/i.test(l) && l.split(" ").length > 2; });
+    var box = document.getElementById("results");
+    if (!lines.length) {
+      box.innerHTML = "<p><strong>Paste at least one outcome to check.</strong></p>";
+      return;
+    }
+    render(lines, levelSel.value);
+  });
+  document.getElementById("clear").addEventListener("click", function () {
+    input.value = "";
+    document.getElementById("results").innerHTML = "";
+    input.focus();
+  });
+  document.getElementById("example").addEventListener("click", function () {
+    levelSel.value = "course100";
+    input.value = [
+      "Upon successful completion of this course, students will be able to:",
+      "1. Understand the principles of supply and demand.",
+      "2. Analyze research data and present their findings to an audience.",
+      "3. Complete three laboratory reports and participate in weekly discussions.",
+      "4. Demonstrate effective communication skills.",
+      "5. Explain how a change in supply or demand affects equilibrium price and quantity in a competitive market."
+    ].join("\n");
+    input.focus();
+  });
+
+  var cl = document.getElementById("contact-line");
+  cl.innerHTML = TLDE_EMAIL
+    ? "Questions about outcomes? Email TLDE at <a href='mailto:" + TLDE_EMAIL + "'>" + TLDE_EMAIL + "</a>."
+    : "Questions about outcomes? Reach out to TLDE.";
+
+  // Expose for testing
+  window.__checker = { mainVerb: mainVerb, checkOutcome: checkOutcome, extraVerbs: extraVerbs, cleanLine: cleanLine };
+})();
+</script>
+</body>
+</html>
