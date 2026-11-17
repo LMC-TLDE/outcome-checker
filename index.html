@@ -390,6 +390,20 @@
       });
     }
 
+    // 3b. Assignment specs (a count plus a product: "a 100-page essay", "three lab reports")
+    var assignmentSpec = /\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|fifty|a dozen)(?:[\s\-]+[a-z]+){0,2}?[\s\-]+(?:pages?|words?|minutes?|slides?|paragraphs?|essays?|papers?|reports?|quizzes|quiz|exams?|tests?|discussions?|posts?|presentations?|projects?|assignments?|journals?|entries|labs?|hours?)\b/i;
+    var activityFlagged = flags.some(function (f) { return f.title === "An activity rather than a result"; });
+    if (assignmentSpec.test(text)) {
+      addMark(assignmentSpec);
+      if (!activityFlagged) {
+        flags.push({
+          title: "This reads like an assignment",
+          msg: "Naming a quantity or format (a page count, a number of reports, a length of time) usually describes the assignment that will produce the evidence, not the ability itself. The assignment may be exactly right. Perhaps consider what a strong version of it would show a student can do, and make that the outcome, for example: <em>compose an argument supported by evidence from scholarly sources</em>.",
+          src: "pitfalls"
+        });
+      }
+    }
+
     // 4. Compound outcome
     var extras = extraVerbs(text, mv);
     if (mv && mv.level && extras.length) {
