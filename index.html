@@ -577,11 +577,30 @@
       html += "</section>";
     });
 
+    var onlyYou = {
+      course: [
+        "Do you know which assessment will show each outcome was met? The assessment belongs in your course plan, not in the outcome sentence itself.",
+        "Does each outcome connect to at least one program or institutional outcome?",
+        "If a student met all of these, would you be satisfied they had completed the course?",
+        "Would a colleague in your discipline read each one the same way you do?"
+      ],
+      program: [
+        "Does each outcome describe what a graduate can do, rather than what a course covers?",
+        "Could any of these be met in a single course? If so, it may belong at the course level.",
+        "If the program has an accreditor or licensure body, are its requirements reflected?",
+        "Does the curriculum map show at least one course taking each outcome to the mastered level?",
+        "Is there evidence somewhere in the program, such as a capstone, portfolio, or licensure exam, that would show whether a graduate can do this?"
+      ],
+      module: [
+        "Does each outcome support at least one course outcome?",
+        "Is the cognitive demand consistent with the course outcome it serves?",
+        "Do you know which activity or assessment in this module will show each outcome was met?",
+        "Would a student understand what each one asks of them?"
+      ]
+    };
+    var listKey = level === "program" ? "program" : (level === "module" ? "module" : "course");
     html += "<div class='callout'><h3>What only you can check</h3><ul>" +
-      "<li>Can you name the assignment, exam, performance, or product that would show each outcome was met?</li>" +
-      "<li>Does each outcome connect to a program or institutional outcome?</li>" +
-      "<li>If a student met all of these, would you be satisfied they had completed the course?</li>" +
-      "<li>Would a colleague in your discipline read each one the same way you do?</li>" +
+      onlyYou[listKey].map(function (q) { return "<li>" + q + "</li>"; }).join("") +
       "</ul><p>The full checklist is on the " + link("selfcheck") + " page.</p></div>";
 
     var contact = TLDE_EMAIL
